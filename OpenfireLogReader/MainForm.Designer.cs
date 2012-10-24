@@ -31,177 +31,310 @@ namespace OpenfireLogReader
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.ofdLog = new System.Windows.Forms.OpenFileDialog();
             this.mstMenu = new System.Windows.Forms.MenuStrip();
-            this.openLogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.txbBody = new System.Windows.Forms.TextBox();
-            this.lblTo = new System.Windows.Forms.Label();
-            this.lblFrom = new System.Windows.Forms.Label();
-            this.lsbUsers = new System.Windows.Forms.ListBox();
-            this.lsbMessages = new System.Windows.Forms.ListBox();
-            this.lblTimestamp = new System.Windows.Forms.Label();
-            this.btnPrintMessage = new System.Windows.Forms.Button();
-            this.prntMessage = new System.Drawing.Printing.PrintDocument();
-            this.prntPreviewDialog = new System.Windows.Forms.PrintPreviewDialog();
-            this.prntAllMessages = new System.Drawing.Printing.PrintDocument();
-            this.btnPrintAll = new System.Windows.Forms.Button();
+            this.fileMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openLogMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openLogFolderMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.pageSetupToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.printToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.printPreviewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.c_messageDisplay = new System.Windows.Forms.TextBox();
+            this.c_userList = new System.Windows.Forms.ListBox();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.c_messageList = new System.Windows.Forms.ListView();
+            this.Timestamp = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.From = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.To = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.Message = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.c_filterList = new System.Windows.Forms.ComboBox();
+            this.lblFilter = new System.Windows.Forms.Label();
+            this.printDialog = new System.Windows.Forms.PrintDialog();
+            this.printDocument = new System.Drawing.Printing.PrintDocument();
+            this.printPreviewDialog = new System.Windows.Forms.PrintPreviewDialog();
+            this.pageSetupDialog = new System.Windows.Forms.PageSetupDialog();
+            this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+            this.c_filterApplyButton = new System.Windows.Forms.Button();
+            this.c_filterClearButton = new System.Windows.Forms.Button();
+            this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
+            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mstMenu.SuspendLayout();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
             this.SuspendLayout();
             // 
             // ofdLog
             // 
             this.ofdLog.Filter = "Log files|*.log|All Files|*.*";
+            this.ofdLog.Multiselect = true;
             // 
             // mstMenu
             // 
             this.mstMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.openLogToolStripMenuItem});
+            this.fileMenuItem,
+            this.aboutToolStripMenuItem});
             this.mstMenu.Location = new System.Drawing.Point(0, 0);
             this.mstMenu.Name = "mstMenu";
-            this.mstMenu.Size = new System.Drawing.Size(806, 24);
+            this.mstMenu.Size = new System.Drawing.Size(792, 24);
             this.mstMenu.TabIndex = 6;
             this.mstMenu.Text = "menuStrip1";
             // 
-            // openLogToolStripMenuItem
+            // fileMenuItem
             // 
-            this.openLogToolStripMenuItem.Name = "openLogToolStripMenuItem";
-            this.openLogToolStripMenuItem.Size = new System.Drawing.Size(71, 20);
-            this.openLogToolStripMenuItem.Text = "Open Log";
-            this.openLogToolStripMenuItem.Click += new System.EventHandler(this.openLogToolStripMenuItem_Click);
+            this.fileMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.openLogMenuItem,
+            this.openLogFolderMenuItem,
+            this.toolStripSeparator1,
+            this.pageSetupToolStripMenuItem,
+            this.printToolStripMenuItem,
+            this.printPreviewToolStripMenuItem,
+            this.toolStripSeparator2,
+            this.exitToolStripMenuItem});
+            this.fileMenuItem.Name = "fileMenuItem";
+            this.fileMenuItem.Size = new System.Drawing.Size(35, 20);
+            this.fileMenuItem.Text = "&File";
             // 
-            // txbBody
+            // openLogMenuItem
             // 
-            this.txbBody.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.txbBody.Font = new System.Drawing.Font("Courier New", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txbBody.Location = new System.Drawing.Point(15, 478);
-            this.txbBody.Multiline = true;
-            this.txbBody.Name = "txbBody";
-            this.txbBody.Size = new System.Drawing.Size(779, 159);
-            this.txbBody.TabIndex = 7;
+            this.openLogMenuItem.Name = "openLogMenuItem";
+            this.openLogMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.openLogMenuItem.Text = "&Open Log...";
+            this.openLogMenuItem.Click += new System.EventHandler(this.openLogToolStripMenuItem_Click);
             // 
-            // lblTo
+            // openLogFolderMenuItem
             // 
-            this.lblTo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblTo.AutoSize = true;
-            this.lblTo.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTo.Location = new System.Drawing.Point(12, 435);
-            this.lblTo.Name = "lblTo";
-            this.lblTo.Size = new System.Drawing.Size(29, 18);
-            this.lblTo.TabIndex = 8;
-            this.lblTo.Text = "To :";
+            this.openLogFolderMenuItem.Name = "openLogFolderMenuItem";
+            this.openLogFolderMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.openLogFolderMenuItem.Text = "Open Log &Folder...";
+            this.openLogFolderMenuItem.Click += new System.EventHandler(this.openLogFolderMenu_Click);
             // 
-            // lblFrom
+            // toolStripSeparator1
             // 
-            this.lblFrom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblFrom.AutoSize = true;
-            this.lblFrom.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblFrom.Location = new System.Drawing.Point(12, 457);
-            this.lblFrom.Name = "lblFrom";
-            this.lblFrom.Size = new System.Drawing.Size(47, 18);
-            this.lblFrom.TabIndex = 9;
-            this.lblFrom.Text = "From :";
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(173, 6);
             // 
-            // lsbUsers
+            // pageSetupToolStripMenuItem
             // 
-            this.lsbUsers.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)));
-            this.lsbUsers.Font = new System.Drawing.Font("Courier New", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lsbUsers.FormattingEnabled = true;
-            this.lsbUsers.ItemHeight = 17;
-            this.lsbUsers.Location = new System.Drawing.Point(12, 27);
-            this.lsbUsers.Name = "lsbUsers";
-            this.lsbUsers.Size = new System.Drawing.Size(104, 395);
-            this.lsbUsers.TabIndex = 10;
-            this.lsbUsers.SelectedIndexChanged += new System.EventHandler(this.lsbUsers_SelectedIndexChanged);
+            this.pageSetupToolStripMenuItem.Name = "pageSetupToolStripMenuItem";
+            this.pageSetupToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.pageSetupToolStripMenuItem.Text = "Page Set&up...";
+            this.pageSetupToolStripMenuItem.Click += new System.EventHandler(this.pageSetupToolStripMenuItem_Click);
             // 
-            // lsbMessages
+            // printToolStripMenuItem
             // 
-            this.lsbMessages.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lsbMessages.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.lsbMessages.Font = new System.Drawing.Font("Courier New", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lsbMessages.FormattingEnabled = true;
-            this.lsbMessages.ItemHeight = 17;
-            this.lsbMessages.Location = new System.Drawing.Point(122, 27);
-            this.lsbMessages.Name = "lsbMessages";
-            this.lsbMessages.Size = new System.Drawing.Size(672, 395);
-            this.lsbMessages.TabIndex = 11;
-            this.lsbMessages.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.lsbMessages_DrawItem);
-            this.lsbMessages.SelectedIndexChanged += new System.EventHandler(this.lsbMessages_SelectedIndexChanged);
+            this.printToolStripMenuItem.Name = "printToolStripMenuItem";
+            this.printToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.printToolStripMenuItem.Text = "&Print...";
+            this.printToolStripMenuItem.Click += new System.EventHandler(this.printToolStripMenuItem_Click);
             // 
-            // lblTimestamp
+            // printPreviewToolStripMenuItem
             // 
-            this.lblTimestamp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblTimestamp.AutoSize = true;
-            this.lblTimestamp.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTimestamp.Location = new System.Drawing.Point(287, 435);
-            this.lblTimestamp.Name = "lblTimestamp";
-            this.lblTimestamp.Size = new System.Drawing.Size(87, 18);
-            this.lblTimestamp.TabIndex = 12;
-            this.lblTimestamp.Text = "Timestamp : ";
+            this.printPreviewToolStripMenuItem.Name = "printPreviewToolStripMenuItem";
+            this.printPreviewToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.printPreviewToolStripMenuItem.Text = "Print Preview...";
+            this.printPreviewToolStripMenuItem.Click += new System.EventHandler(this.printPreviewToolStripMenuItem_Click);
             // 
-            // btnPrintMessage
+            // toolStripSeparator2
             // 
-            this.btnPrintMessage.Enabled = false;
-            this.btnPrintMessage.Location = new System.Drawing.Point(698, 455);
-            this.btnPrintMessage.Name = "btnPrintMessage";
-            this.btnPrintMessage.Size = new System.Drawing.Size(96, 23);
-            this.btnPrintMessage.TabIndex = 13;
-            this.btnPrintMessage.Text = "Print Message";
-            this.btnPrintMessage.UseVisualStyleBackColor = true;
-            this.btnPrintMessage.Click += new System.EventHandler(this.btnPrintMessage_Click);
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(173, 6);
             // 
-            // prntMessage
+            // exitToolStripMenuItem
             // 
-            this.prntMessage.PrintPage += new System.Drawing.Printing.PrintPageEventHandler(this.prntMessage_PrintPage);
-            this.prntMessage.BeginPrint += new System.Drawing.Printing.PrintEventHandler(this.prntMessage_BeginPrint);
+            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.exitToolStripMenuItem.Text = "E&xit";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
-            // prntPreviewDialog
+            // c_messageDisplay
             // 
-            this.prntPreviewDialog.AutoScrollMargin = new System.Drawing.Size(0, 0);
-            this.prntPreviewDialog.AutoScrollMinSize = new System.Drawing.Size(0, 0);
-            this.prntPreviewDialog.ClientSize = new System.Drawing.Size(400, 300);
-            this.prntPreviewDialog.Document = this.prntMessage;
-            this.prntPreviewDialog.Enabled = true;
-            this.prntPreviewDialog.Icon = ((System.Drawing.Icon)(resources.GetObject("prntPreviewDialog.Icon")));
-            this.prntPreviewDialog.Name = "prntPreviewDialog";
-            this.prntPreviewDialog.Visible = false;
+            this.c_messageDisplay.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.c_messageDisplay.Location = new System.Drawing.Point(12, 352);
+            this.c_messageDisplay.Multiline = true;
+            this.c_messageDisplay.Name = "c_messageDisplay";
+            this.c_messageDisplay.ReadOnly = true;
+            this.c_messageDisplay.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.c_messageDisplay.Size = new System.Drawing.Size(768, 162);
+            this.c_messageDisplay.TabIndex = 4;
             // 
-            // prntAllMessages
+            // c_userList
             // 
-            this.prntAllMessages.PrintPage += new System.Drawing.Printing.PrintPageEventHandler(this.prntAllMessages_PrintPage);
-            this.prntAllMessages.BeginPrint += new System.Drawing.Printing.PrintEventHandler(this.prntAllMessages_BeginPrint);
+            this.c_userList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.c_userList.FormattingEnabled = true;
+            this.c_userList.IntegralHeight = false;
+            this.c_userList.Location = new System.Drawing.Point(3, 3);
+            this.c_userList.Name = "c_userList";
+            this.c_userList.Size = new System.Drawing.Size(124, 284);
+            this.c_userList.Sorted = true;
+            this.c_userList.TabIndex = 0;
+            this.c_userList.SelectedIndexChanged += new System.EventHandler(this.c_userList_SelectedIndexChanged);
             // 
-            // btnPrintAll
+            // splitContainer1
             // 
-            this.btnPrintAll.Enabled = false;
-            this.btnPrintAll.Location = new System.Drawing.Point(698, 426);
-            this.btnPrintAll.Name = "btnPrintAll";
-            this.btnPrintAll.Size = new System.Drawing.Size(96, 23);
-            this.btnPrintAll.TabIndex = 14;
-            this.btnPrintAll.Text = "Print All";
-            this.btnPrintAll.UseVisualStyleBackColor = true;
-            this.btnPrintAll.Click += new System.EventHandler(this.btnPrintAll_Click);
+            this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
+            this.splitContainer1.Location = new System.Drawing.Point(13, 28);
+            this.splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.c_userList);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this.c_messageList);
+            this.splitContainer1.Size = new System.Drawing.Size(767, 292);
+            this.splitContainer1.SplitterDistance = 130;
+            this.splitContainer1.TabIndex = 0;
+            // 
+            // c_messageList
+            // 
+            this.c_messageList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.c_messageList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.Timestamp,
+            this.From,
+            this.To,
+            this.Message});
+            this.c_messageList.FullRowSelect = true;
+            this.c_messageList.GridLines = true;
+            this.c_messageList.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+            this.c_messageList.HideSelection = false;
+            this.c_messageList.Location = new System.Drawing.Point(4, 4);
+            this.c_messageList.Name = "c_messageList";
+            this.c_messageList.Size = new System.Drawing.Size(626, 283);
+            this.c_messageList.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this.c_messageList.TabIndex = 0;
+            this.c_messageList.UseCompatibleStateImageBehavior = false;
+            this.c_messageList.View = System.Windows.Forms.View.Details;
+            this.c_messageList.VirtualMode = true;
+            this.c_messageList.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.c_messageList_RetrieveVirtualItem);
+            this.c_messageList.SelectedIndexChanged += new System.EventHandler(this.c_messageList_SelectedIndexChanged);
+            this.c_messageList.VirtualItemsSelectionRangeChanged += new System.Windows.Forms.ListViewVirtualItemsSelectionRangeChangedEventHandler(this.c_messageList_VirtualSelectedIndexChanged);
+            // 
+            // Timestamp
+            // 
+            this.Timestamp.Text = "Timestamp";
+            this.Timestamp.Width = 140;
+            // 
+            // From
+            // 
+            this.From.Text = "From";
+            this.From.Width = 100;
+            // 
+            // To
+            // 
+            this.To.Text = "To";
+            this.To.Width = 100;
+            // 
+            // Message
+            // 
+            this.Message.Text = "Message";
+            this.Message.Width = 360;
+            // 
+            // c_filterList
+            // 
+            this.c_filterList.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.c_filterList.FormattingEnabled = true;
+            this.c_filterList.Location = new System.Drawing.Point(48, 324);
+            this.c_filterList.Name = "c_filterList";
+            this.c_filterList.Size = new System.Drawing.Size(160, 21);
+            this.c_filterList.TabIndex = 1;
+            // 
+            // lblFilter
+            // 
+            this.lblFilter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblFilter.AutoSize = true;
+            this.lblFilter.Location = new System.Drawing.Point(13, 327);
+            this.lblFilter.Name = "lblFilter";
+            this.lblFilter.Size = new System.Drawing.Size(29, 13);
+            this.lblFilter.TabIndex = 17;
+            this.lblFilter.Text = "Filter";
+            // 
+            // printDialog
+            // 
+            this.printDialog.UseEXDialog = true;
+            // 
+            // printDocument
+            // 
+            this.printDocument.DocumentName = "Openfire Reader Logs";
+            this.printDocument.BeginPrint += new System.Drawing.Printing.PrintEventHandler(this.printDocument_BeginPrint);
+            this.printDocument.PrintPage += new System.Drawing.Printing.PrintPageEventHandler(this.printDocument_PrintPage);
+            // 
+            // printPreviewDialog
+            // 
+            this.printPreviewDialog.AutoScrollMargin = new System.Drawing.Size(0, 0);
+            this.printPreviewDialog.AutoScrollMinSize = new System.Drawing.Size(0, 0);
+            this.printPreviewDialog.ClientSize = new System.Drawing.Size(400, 300);
+            this.printPreviewDialog.Enabled = true;
+            this.printPreviewDialog.Icon = ((System.Drawing.Icon)(resources.GetObject("printPreviewDialog.Icon")));
+            this.printPreviewDialog.Name = "printPreviewDialog";
+            this.printPreviewDialog.Visible = false;
+            // 
+            // c_filterApplyButton
+            // 
+            this.c_filterApplyButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.c_filterApplyButton.Location = new System.Drawing.Point(214, 323);
+            this.c_filterApplyButton.Name = "c_filterApplyButton";
+            this.c_filterApplyButton.Size = new System.Drawing.Size(75, 23);
+            this.c_filterApplyButton.TabIndex = 19;
+            this.c_filterApplyButton.Text = "Apply Filter";
+            this.c_filterApplyButton.UseVisualStyleBackColor = true;
+            this.c_filterApplyButton.Click += new System.EventHandler(this.c_filterButton_Click);
+            // 
+            // c_filterClearButton
+            // 
+            this.c_filterClearButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.c_filterClearButton.Location = new System.Drawing.Point(295, 323);
+            this.c_filterClearButton.Name = "c_filterClearButton";
+            this.c_filterClearButton.Size = new System.Drawing.Size(75, 23);
+            this.c_filterClearButton.TabIndex = 19;
+            this.c_filterClearButton.Text = "Clear Filter";
+            this.c_filterClearButton.UseVisualStyleBackColor = true;
+            this.c_filterClearButton.Click += new System.EventHandler(this.c_filterButton_Click);
+            // 
+            // backgroundWorker
+            // 
+            this.backgroundWorker.WorkerReportsProgress = true;
+            this.backgroundWorker.WorkerSupportsCancellation = true;
+            this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_DoWork);
+            // 
+            // aboutToolStripMenuItem
+            // 
+            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
+            this.aboutToolStripMenuItem.Text = "&About";
+            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(806, 649);
-            this.Controls.Add(this.btnPrintAll);
-            this.Controls.Add(this.btnPrintMessage);
-            this.Controls.Add(this.lblTimestamp);
-            this.Controls.Add(this.lsbMessages);
-            this.Controls.Add(this.lsbUsers);
-            this.Controls.Add(this.lblFrom);
-            this.Controls.Add(this.lblTo);
-            this.Controls.Add(this.txbBody);
+            this.ClientSize = new System.Drawing.Size(792, 526);
+            this.Controls.Add(this.c_filterApplyButton);
+            this.Controls.Add(this.c_filterClearButton);
+            this.Controls.Add(this.lblFilter);
+            this.Controls.Add(this.c_filterList);
+            this.Controls.Add(this.c_messageDisplay);
             this.Controls.Add(this.mstMenu);
+            this.Controls.Add(this.splitContainer1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.mstMenu;
             this.Name = "MainForm";
-            this.Text = "Reader";
+            this.Text = "Openfire Log Reader";
             this.mstMenu.ResumeLayout(false);
             this.mstMenu.PerformLayout();
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            this.splitContainer1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -211,18 +344,34 @@ namespace OpenfireLogReader
 
         private System.Windows.Forms.OpenFileDialog ofdLog;
         private System.Windows.Forms.MenuStrip mstMenu;
-        private System.Windows.Forms.ToolStripMenuItem openLogToolStripMenuItem;
-        private System.Windows.Forms.TextBox txbBody;
-        private System.Windows.Forms.Label lblTo;
-        private System.Windows.Forms.Label lblFrom;
-        private System.Windows.Forms.ListBox lsbUsers;
-        private System.Windows.Forms.ListBox lsbMessages;
-        private System.Windows.Forms.Label lblTimestamp;
-        private System.Windows.Forms.Button btnPrintMessage;
-        private System.Drawing.Printing.PrintDocument prntMessage;
-        private System.Windows.Forms.PrintPreviewDialog prntPreviewDialog;
-        private System.Drawing.Printing.PrintDocument prntAllMessages;
-        private System.Windows.Forms.Button btnPrintAll;
+		private System.Windows.Forms.TextBox c_messageDisplay;
+		private System.Windows.Forms.ListBox c_userList;
+		private System.Windows.Forms.SplitContainer splitContainer1;
+		private System.Windows.Forms.ListView c_messageList;
+		private System.Windows.Forms.ColumnHeader Timestamp;
+		private System.Windows.Forms.ColumnHeader From;
+		private System.Windows.Forms.ColumnHeader To;
+		private System.Windows.Forms.ColumnHeader Message;
+		private System.Windows.Forms.ComboBox c_filterList;
+		private System.Windows.Forms.Label lblFilter;
+		private System.Windows.Forms.PrintDialog printDialog;
+		private System.Drawing.Printing.PrintDocument printDocument;
+		private System.Windows.Forms.PrintPreviewDialog printPreviewDialog;
+		private System.Windows.Forms.ToolStripMenuItem fileMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem openLogMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem openLogFolderMenuItem;
+		private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+		private System.Windows.Forms.ToolStripMenuItem pageSetupToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem printToolStripMenuItem;
+		private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+		private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+		private System.Windows.Forms.PageSetupDialog pageSetupDialog;
+		private System.Windows.Forms.ToolStripMenuItem printPreviewToolStripMenuItem;
+		private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog;
+		private System.Windows.Forms.Button c_filterApplyButton;
+		private System.Windows.Forms.Button c_filterClearButton;
+		private System.ComponentModel.BackgroundWorker backgroundWorker;
+        private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
     }
 }
 

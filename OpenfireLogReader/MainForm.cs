@@ -10,394 +10,475 @@ using System.Windows.Forms;
 using System.IO;
 using System.Xml;
 
-namespace OpenfireLogReader
-{
-    public partial class MainForm : Form
-    {
-        private Dictionary<MyUser, List<MyMessage>> m_Table = new Dictionary<MyUser, List<MyMessage>>();
+namespace OpenfireLogReader {
+	public partial class MainForm : Form {
+		// A list of all the messages by user
+		private Dictionary<MyUser, List<MyMessage>> m_userMessages = new Dictionary<MyUser, List<MyMessage>>();
 
-        public MainForm()
+		// TODO: Check and see how much memory is used by keeping a list of messages instead of a count
+		private Dictionary<MyUser, Dictionary<MyUser, int>> m_userInteractions = new Dictionary<MyUser, Dictionary<MyUser, int>>();
+
+		// The currently selected user
+		private MyUser m_selectedUser = null;
+		private List<MyUser> m_userList = null;
+
+		// What user we're filtering on
+		private MyUser m_filterUser = null;
+		private List<MyUser> m_filterList = null;
+		private List<int> filterMap = null;
+
+		// Last printed line for multi page print jobs
+		private int m_lastPrintItem;
+		private int m_pageNumber;
+		private int m_printItemCount;
+
+        // Whether to skip all bad files
+        private bool m_skipAll = false;
+
+		public MainForm() {
+			InitializeComponent();
+		}
+
+		#region Events
+		// Open one or more log files
+		private void openLogToolStripMenuItem_Click(object sender, EventArgs e) {
+			DialogResult result = ofdLog.ShowDialog();
+
+			if (result == DialogResult.Cancel)
+				return;
+
+			loadFiles(ofdLog.FileNames);
+		}
+
+		// Open a directory of log files
+		private void openLogFolderMenu_Click(object sender, EventArgs e) {
+			DialogResult result = folderBrowserDialog.ShowDialog();
+
+			if (result == DialogResult.Cancel)
+				return;
+
+			string[] filenames = Directory.GetFiles(folderBrowserDialog.SelectedPath);
+			loadFiles(filenames);
+		}
+
+		private void c_userList_SelectedIndexChanged(object sender, EventArgs e) {
+			m_filterUser = null;
+
+			if (c_userList.SelectedIndex >= 0) {
+				m_selectedUser = (MyUser)c_userList.SelectedItem;
+				updateMessageList();
+				updateFilterList();
+			} else {
+				m_selectedUser = null;
+				c_messageList.VirtualListSize = 0;
+				c_filterList.DataSource = null;
+			}
+		}
+
+		private void c_messageList_RetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e) {
+			MyMessage message = getVirtualItem(e.ItemIndex);
+
+			if (message != null) {
+				e.Item = new ListViewItem(new string[] { message.TimeStamp.ToString(), message.From.Name, message.To.Name, message.Text });
+				if (message.From.Name == m_selectedUser.Name) {
+					e.Item.ForeColor = System.Drawing.Color.Blue;
+				}
+				e.Item.Tag = message;
+			}
+		}
+
+		private void c_messageList_SelectedIndexChanged(object sender, EventArgs e) {
+			if (c_messageList.SelectedIndices.Count == 1) {
+				String template = "Timestamp: {0}   From: {1}   To: {2}{3}{4}{3}{3}";
+				int selectedIndex = c_messageList.SelectedIndices[0];
+				
+				MyMessage selected = getVirtualItem(selectedIndex);
+				c_messageDisplay.Text = String.Format(template, selected.TimeStamp, selected.From,
+											 selected.To, Environment.NewLine, selected.Text);
+				
+				printDialog.AllowSelection = true;
+			} else {
+				c_messageDisplay.Text = "";
+				printDialog.AllowSelection = false;
+			}				
+		}
+
+        private void c_messageList_VirtualSelectedIndexChanged(object sender, ListViewVirtualItemsSelectionRangeChangedEventArgs e)
         {
-            InitializeComponent();
+            if (c_messageList.SelectedIndices.Count == 0)
+            {
+                printDialog.AllowSelection = false;
+            }
+            else
+            {
+                printDialog.AllowSelection = true;
+                c_messageDisplay.SuspendLayout();
+                for (int i = 0; i < c_messageList.SelectedIndices.Count; i++)
+                {
+                    String template = "Timestamp: {0}   From: {1}   To: {2}{3}{4}{3}{3}";
+                    int selectedIndex = c_messageList.SelectedIndices[i];
+
+                    MyMessage selected = getVirtualItem(selectedIndex);
+                    c_messageDisplay.Text += String.Format(template, selected.TimeStamp, selected.From,
+                                             selected.To, Environment.NewLine, selected.Text);
+                }
+                c_messageDisplay.ResumeLayout();
+            }
         }
-        #region Events
-        private void openLogToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            DialogResult result = ofdLog.ShowDialog();
 
-            if (result == DialogResult.Cancel)
+		private void exitToolStripMenuItem_Click(object sender, EventArgs e) {
+			Application.Exit();
+		}
+
+		private void c_filterButton_Click(object sender, EventArgs e) {
+			if (sender.Equals(c_filterApplyButton) && (c_filterList.SelectedIndex >= 0)) {
+				MyUser selectedUser = (MyUser)c_filterList.SelectedItem;
+				if (m_filterUser == selectedUser)
+					return;
+
+				m_filterUser = selectedUser;
+			} else {
+				m_filterUser = null;
+				c_filterList.SelectedIndex = -1;
+			}
+			updateMessageList();
+            c_messageList.Focus();
+		}
+
+		private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e) {
+			string[] filenames = (string[])e.Argument;
+			BackgroundWorker worker = sender as BackgroundWorker;
+
+			foreach (String filename in filenames) {
+				if (worker.CancellationPending) {
+					return;
+				}
+
+				if (File.Exists(filename)) {
+					worker.ReportProgress(0, filename);
+					parseLogFile(filename);
+				}
+			}
+
+		}
+        #endregion
+
+		#region Methods
+		private void parseLogFile(string fileName) {
+			string file = "";
+			XmlDocument doc = new XmlDocument();
+			try {
+                Stream st = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                file = new StreamReader(st).ReadToEnd();
+
+				// Logs that are still being written to don't have closing tags
+				if (!file.EndsWith("</jive>")) {
+					file += "</jive>";
+				}
+				doc.LoadXml(file);
+			}
+			catch { /* (Exception ex) */
+                if (m_skipAll)
+                    return;
+
+                skipFileDialog skip = new skipFileDialog(fileName);
+                DialogResult result = skip.ShowDialog();
+
+                if (result == DialogResult.OK) {
+                    m_skipAll = true;
+				} else if (result == DialogResult.Cancel)  {
+                    backgroundWorker.CancelAsync();
+				}
                 return;
-            if (File.Exists(ofdLog.FileName))
-            {
-                Build(ofdLog.FileName);
-            }
-        }
+			}
 
-        private void lsbUsers_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (lsbUsers.SelectedIndex >= 0)
-            {
-                lsbMessages.Items.Clear();
-                lsbMessages.Items.AddRange(m_Table[(MyUser)lsbUsers.SelectedItem].ToArray());
-                btnPrintAll.Enabled = true;
-            }
-            else
-            {
-                lsbMessages.Items.Clear();
-                btnPrintAll.Enabled = false;
-            }
-        }
+			DateTime date;
+			String to, from, id;
+			MyUser toUser;
+			MyUser fromUser;
+			MyMessage myMessage;
 
-        private void lsbMessages_DrawItem(object sender, DrawItemEventArgs e)
-        {
-            if (lsbUsers.SelectedIndex >= 0)
+			XmlNode parentNode = doc.ChildNodes[0];
+
+			foreach (XmlNode packet in parentNode.ChildNodes) {
+				if (packet.Attributes["timestamp"] == null)
+					continue;
+
+				date = DateTime.ParseExact(packet.Attributes["timestamp"].Value, "MMM dd, yyyy hh:mm:ss:fff tt", CultureInfo.InvariantCulture);
+
+				foreach (XmlNode message in packet.ChildNodes) {
+					if (message.Attributes["from"] == null)
+						continue;
+
+					from = message.Attributes["from"].Value;
+					if (from.IndexOf("@") == -1)
+						continue;
+
+					if (message.Attributes["to"] == null)
+						continue;
+
+					to = message.Attributes["to"].Value;
+					if (to == null || to.IndexOf("@") == -1)
+						continue;
+
+					if (message.Attributes["id"] == null) {
+						id = "";
+					} else {
+						id = message.Attributes["id"].Value.Trim();
+					}
+
+					toUser = new MyUser(to.Substring(0, to.IndexOf("@")));
+					fromUser = new MyUser(from.Substring(0, from.IndexOf("@")));
+
+					foreach (XmlNode body in message.ChildNodes) {
+						if (body.Name == "body") {
+							myMessage = new MyMessage(date, toUser, fromUser, id, body.InnerText.Trim());
+							// Make sure toUser and fromUser exist in the dictionaries
+							if (!m_userMessages.ContainsKey(toUser)) {
+								m_userMessages.Add(toUser, new List<MyMessage>());
+								m_userInteractions.Add(toUser, new Dictionary<MyUser, int>());
+							}
+							if (!m_userMessages.ContainsKey(fromUser)) {
+								m_userMessages.Add(fromUser, new List<MyMessage>());
+								m_userInteractions.Add(fromUser, new Dictionary<MyUser, int>());
+							}
+
+							if (!m_userMessages[toUser].Contains(myMessage)) {
+								m_userMessages[toUser].Add(myMessage);
+								if (!m_userInteractions[toUser].ContainsKey(fromUser)) {
+									m_userInteractions[toUser].Add(fromUser, 1);
+									m_userInteractions[fromUser].Add(toUser, 1);
+								} else {
+									m_userInteractions[toUser][fromUser]++;
+									m_userInteractions[fromUser][toUser]++;
+								}
+							}
+							if (!m_userMessages[fromUser].Contains(myMessage)) {
+								m_userMessages[fromUser].Add(myMessage);
+							}
+
+						}
+					}
+				}
+			}
+
+
+		}
+
+		private void updateFilterList() {
+			if (m_selectedUser == null)
+				return;
+
+			m_filterList = new List<MyUser>(m_userInteractions[m_selectedUser].Keys);
+			m_filterList.Sort();
+			c_filterList.DataSource = null;
+			c_filterList.DisplayMember = "Name";
+			c_filterList.DataSource = m_filterList;
+			c_filterList.SelectedIndex = -1;
+		}
+
+		private void updateMessageList() {
+			c_messageList.VirtualListSize = 0;
+			if (m_selectedUser != null) {
+				m_userMessages[m_selectedUser].Sort();
+				if (m_filterUser == null) {
+					filterMap = null;
+					c_messageList.VirtualListSize = m_userMessages[m_selectedUser].Count;
+				} else {
+					filterMap = new List<int>();
+					MyMessage[] messages = m_userMessages[m_selectedUser].ToArray();
+					for (int i = 0; i < messages.Length; i++) {
+						if (messages[i].To == m_filterUser || messages[i].From == m_filterUser) {
+							filterMap.Add(i);
+						}
+					}
+					c_messageList.VirtualListSize = m_userInteractions[m_selectedUser][m_filterUser];
+				}
+			}
+            c_messageDisplay.Clear();
+		}
+
+		private void loadFiles(string[] filenames) {
+			if (filenames.LongLength == 0)
+				return;
+
+			if (!backgroundWorker.IsBusy) {
+				LoadingForm loadForm = new LoadingForm(filenames.Length, backgroundWorker);
+				backgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(loadForm.workerProgressChanged);
+				backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(loadForm.workerRunCompleted);
+				backgroundWorker.RunWorkerAsync((object)filenames);
+				loadForm.ShowDialog();
+
+				m_userList = new List<MyUser>(m_userMessages.Keys);
+				m_userList.Sort();
+				c_userList.DataSource = null;
+				c_userList.DisplayMember = "Name";
+				c_userList.DataSource = m_userList;
+
+				updateMessageList();
+				updateFilterList();
+			}
+		}
+
+		private MyMessage getVirtualItem(int ItemIndex) {
+			int realIndex;
+			
+			if (m_filterUser == null) {
+				realIndex = ItemIndex;
+			} else {
+				realIndex = filterMap[ItemIndex];
+			}
+			return m_userMessages[m_selectedUser][realIndex];
+		}
+		#endregion
+
+		#region Printing Support
+		private void printDocument_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e) {
+			// The current window we are drawing in
+			RectangleF current = e.MarginBounds;
+
+			// Measurements of strings
+			SizeF measure = new SizeF();
+			int mChars;
+			int mLines;
+
+			// The name of the currently selected user
+			String user = ((MyUser)c_userList.SelectedItem).Name;
+
+			// Font definitions
+			System.Drawing.Font regfont = new System.Drawing.Font(FontFamily.GenericSerif, 10, FontStyle.Regular);
+			System.Drawing.Font boldfont = new System.Drawing.Font(FontFamily.GenericSerif, 10, FontStyle.Bold);
+
+			// How each string is displayed and placed
+			StringFormat format = new StringFormat(StringFormat.GenericTypographic);
+
+			// Increment the page number
+			m_pageNumber++;
+
+			// Center the selected user's name on each page
+			format.Alignment = StringAlignment.Center;
+			measure = e.Graphics.MeasureString(user + " - Page " + m_pageNumber, boldfont, current.Size, format, out mChars, out mLines);
+			e.Graphics.DrawString(user + " - Page " + m_pageNumber, boldfont, Brushes.Black, current, format);
+			current.Y += measure.Height;
+			current.Height -= measure.Height;
+
+			// The rest of the template on the page is left justified
+			format.Alignment = StringAlignment.Near;
+
+			String label = "";
+
+			DateTime lastdate = new DateTime(1969, 12, 31, 0, 0, 0);
+			DateTime currentdate = new DateTime();
+			
+			for (; m_lastPrintItem < m_printItemCount; m_lastPrintItem++) {
+				RectangleF rectDate;
+				RectangleF rectLabel;
+				MyMessage message = null;
+				String shortDate = null;
+
+				if (e.PageSettings.PrinterSettings.PrintRange == System.Drawing.Printing.PrintRange.Selection) {
+					message = getVirtualItem(c_messageList.SelectedIndices[m_lastPrintItem]);
+				} else {
+					message = getVirtualItem(m_lastPrintItem);
+				}
+				currentdate = message.TimeStamp;
+				rectDate = current;
+				if (lastdate.Date < currentdate.Date) {
+					shortDate = currentdate.ToShortDateString();
+					measure = e.Graphics.MeasureString(System.Environment.NewLine + shortDate, boldfont, rectDate.Size, format, out mChars, out mLines);
+					if (measure.IsEmpty || (mChars < shortDate.Length) || measure.Height > current.Height) {
+						e.HasMorePages = true;
+						return;
+					}
+					current.Y += measure.Height;
+					current.Height -= measure.Height;
+					lastdate = currentdate;
+				}
+
+				// The label is 'from -> to (time): '
+				label = message.From.Name + " -> " + message.To.Name + " (" + currentdate.ToLongTimeString() + "):";
+				rectLabel = current;
+				measure = e.Graphics.MeasureString(label, boldfont, rectLabel.Size, format, out mChars, out mLines);
+				if (measure.IsEmpty || mChars < label.Length || measure.Height > current.Height) {
+					//page done
+					e.HasMorePages = true;
+					return;
+				}
+
+				current.X = (e.MarginBounds.Left * (float)1.05);
+				current.Width = e.MarginBounds.Width - e.MarginBounds.X * (float)0.05;
+				current.Y += measure.Height;
+				current.Height -= measure.Height;
+
+
+				measure = e.Graphics.MeasureString(message.Text, regfont, current.Size, format, out mChars, out mLines);
+				if (measure.IsEmpty || mChars < message.Text.Length || measure.Height > current.Height) {
+					//page done
+					e.HasMorePages = true;
+					return;
+				}
+				if (shortDate != null) {
+					e.Graphics.DrawString(System.Environment.NewLine + shortDate, boldfont, Brushes.Black, rectDate, format);
+				}
+				e.Graphics.DrawString(label, boldfont, Brushes.Black, rectLabel, format);
+				e.Graphics.DrawString(message.Text, regfont, Brushes.Black, current, format);
+				current.X = e.MarginBounds.Left;
+				current.Width = e.MarginBounds.Width;
+				current.Y += measure.Height;
+				current.Height -= measure.Height;
+			}
+		}
+
+		private void pageSetupToolStripMenuItem_Click(object sender, EventArgs e) {
+			pageSetupDialog.Document = printDocument;
+
+			pageSetupDialog.ShowDialog();
+		}
+
+		private void printToolStripMenuItem_Click(object sender, EventArgs e) {
+			printDialog.Document = printDocument;
+
+			DialogResult result = printDialog.ShowDialog();
+
+			if (result == DialogResult.OK) {
+				printDocument.Print();
+			}
+		}
+
+		private void printPreviewToolStripMenuItem_Click(object sender, EventArgs e) {
+            DialogResult result;
+            if (printDialog.AllowSelection)
             {
-                e.DrawBackground();
-                Brush myBrush = Brushes.Black;
-                MyMessage theMessage = (MyMessage)lsbMessages.Items[e.Index];
-                if (theMessage.To.Name == ((MyUser)lsbUsers.SelectedItem).Name)
-                    myBrush = Brushes.Blue;
+                result = MessageBox.Show("Preview only selected items?", "Print Preview", MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    printDocument.PrinterSettings.PrintRange = System.Drawing.Printing.PrintRange.Selection;
+                }
                 else
-                    myBrush = Brushes.DarkGreen;
-
-                e.Graphics.DrawString(theMessage.ToString(), e.Font, myBrush, e.Bounds, StringFormat.GenericDefault);
-                e.DrawFocusRectangle();
-            }
-        }
-
-        private void lsbMessages_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (lsbMessages.SelectedIndex < 0)
-            {
-                btnPrintMessage.Enabled = false;
-            }
-            else
-            {
-                btnPrintMessage.Enabled = true;
-                lblTo.Text = "To : " + ((MyMessage)lsbMessages.SelectedItem).To.Name;
-                lblFrom.Text = "From : " + ((MyMessage)lsbMessages.SelectedItem).From.Name;
-                lblTimestamp.Text = "Timestamp : " + ((MyMessage)lsbMessages.SelectedItem).TimeStamp.ToString("yyyy-MM-dd hh:mm:ss");
-                txbBody.Text = ((MyMessage)lsbMessages.SelectedItem).Body;
-            }
-        }
-        #endregion
-
-        #region Methods
-        private void Build(string fileName)
-        {
-            string file = "";
-            XmlDocument doc = new XmlDocument();
-            try
-            {
-                file = new StreamReader(fileName).ReadToEnd();
-                if (!file.EndsWith("</jive>"))
                 {
-                    file += "</jive>";
-                }
-                doc.LoadXml(file);
-            }
-            catch (Exception ex) { MessageBox.Show(" - " + ex.Message); }
-
-            DateTime date;
-            string to, from;
-            MyUser toUser;
-            MyUser fromUser;
-            MyMessage myMessage;
-
-            XmlNode parentNode = doc.ChildNodes[0];
-
-            foreach (XmlNode packet in parentNode.ChildNodes)
-            {
-                if (packet.Attributes["timestamp"] == null)
-                    continue;
-
-                date = DateTime.ParseExact(packet.Attributes["timestamp"].Value, "MMM dd, yyyy hh:mm:ss:fff tt", CultureInfo.InvariantCulture);
-
-                foreach (XmlNode message in packet.ChildNodes)
-                {
-                    from = message.Attributes["from"].Value;
-                    if (from.IndexOf("@") == -1)
-                        continue;
-
-                    to = message.Attributes["to"].Value;
-                    if (to.IndexOf("@") == -1)
-                        continue;
-
-                    toUser = new MyUser(to.Substring(0, to.IndexOf("@")));
-                    fromUser = new MyUser(from.Substring(0, from.IndexOf("@")));
-
-                    foreach (XmlNode body in message.ChildNodes)
-                    {
-                        if (body.Name == "body")
-                        {
-                            myMessage = new MyMessage(date, toUser, fromUser, body.InnerText);
-                            if (m_Table.ContainsKey(toUser))
-                            {
-                                if (m_Table[toUser] == null)
-                                    m_Table[toUser] = new List<MyMessage>();
-                            }
-                            else
-                            {
-                                m_Table.Add(toUser, new List<MyMessage>());
-                            }
-                            if (m_Table.ContainsKey(fromUser))
-                            {
-                                if (m_Table[fromUser] == null)
-                                    m_Table[fromUser] = new List<MyMessage>();
-                            }
-                            else
-                            {
-                                m_Table.Add(fromUser, new List<MyMessage>());
-                            }
-
-                            if (!m_Table[toUser].Contains(myMessage))
-                                m_Table[toUser].Add(myMessage);
-                            if (!m_Table[fromUser].Contains(myMessage))
-                                m_Table[fromUser].Add(myMessage);
-                        }
-                    }
+                    printDocument.PrinterSettings.PrintRange = System.Drawing.Printing.PrintRange.AllPages;
                 }
             }
 
-            lsbUsers.Items.Clear();
-            foreach (MyUser mu in m_Table.Keys)
-            {
-                lsbUsers.Items.Add(mu);
-            }
-        }
-        #endregion
+			printPreviewDialog.Document = printDocument;
+			result = printPreviewDialog.ShowDialog();
+		}
 
-        #region Private Classes
-        private struct MyUser
+		private void printDocument_BeginPrint(object sender, System.Drawing.Printing.PrintEventArgs e) {
+			m_lastPrintItem = 0;
+			m_pageNumber = 0;
+			if (printDocument.PrinterSettings.PrintRange == System.Drawing.Printing.PrintRange.AllPages) {
+				m_printItemCount = c_messageList.VirtualListSize;
+			} else if (printDocument.PrinterSettings.PrintRange == System.Drawing.Printing.PrintRange.Selection) {
+				m_printItemCount = c_messageList.SelectedIndices.Count;
+			}		
+		}
+		#endregion
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            public string Name;
-
-            public MyUser(string name)
-            {
-                Name = name;
-            }
-
-            public override string ToString()
-            {
-                return Name;
-            }
-            public override bool Equals(object obj)
-            {
-                return obj is MyUser && Equals((MyUser)obj);
-            }
-            public override int GetHashCode()
-            {
-                return base.GetHashCode();
-            }
-
-            public static bool operator ==(MyUser lhs, MyUser rhs)
-            {
-                return lhs.Equals(rhs);
-            }
-            public static bool operator !=(MyUser lhs, MyUser rhs)
-            {
-                return !lhs.Equals(rhs);
-            }
-
-            private bool Equals(MyUser other)
-            {
-                return Name == other.Name;
-            }
+            AboutBox about = new AboutBox();
+            about.ShowDialog();
         }
-
-        private class MyMessage : IComparable
-        {
-            public DateTime TimeStamp;
-            public MyUser To;
-            public MyUser From;
-            public string Body;
-
-            public MyMessage(string time, MyUser to, MyUser from, string body)
-            {
-                TimeStamp = DateTime.ParseExact(time, "MMM dd, yyyy hh:mm:ss:fff tt", new CultureInfo("en-US", true));
-                To = to;
-                From = from;
-                Body = body;
-            }
-
-            public MyMessage(DateTime timestamp, MyUser to, MyUser from, string body)
-            {
-                TimeStamp = timestamp;
-                To = to;
-                From = from;
-                Body = body;
-            }
-
-            public override bool Equals(object obj)
-            {
-                return obj is MyMessage && TimeStamp.Equals(((MyMessage)obj).TimeStamp);
-            }
-
-            public override int GetHashCode()
-            {
-                return base.GetHashCode();
-            }
-
-            public int CompareTo(object obj)
-            {
-                if (obj is MyMessage)
-                {
-                    MyMessage other = (MyMessage)obj;
-                    return TimeStamp.CompareTo(other.TimeStamp);
-                }
-                else
-                {
-                    throw new ArgumentException("Object is not a MyMessage");
-                }
-            }
-
-            public override string ToString()
-            {
-                return String.Format("{0} : from {1,-10} :  to {2,-10} : {3}", TimeStamp.ToString("yyyy-MM-dd hh:mm:ss"), From, To, Body);
-            }
-        }
-        #endregion
-
-        #region Printing
-        int currentPage = 0;
-        int currentRow = 0;
-
-        private void btnPrintAll_Click(object sender, EventArgs e)
-        {
-            prntPreviewDialog.Document = prntAllMessages;
-            prntPreviewDialog.ShowDialog();
-        }
-
-        private void btnPrintMessage_Click(object sender, EventArgs e)
-        {
-            prntPreviewDialog.Document = prntMessage;
-            prntPreviewDialog.ShowDialog();
-        }
-
-        private void prntMessage_BeginPrint(object sender, System.Drawing.Printing.PrintEventArgs e)
-        {
-            currentPage = currentRow = 0;
-        }
-
-        private void prntMessage_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
-        {
-            Graphics g = e.Graphics;
-            g.PageUnit = GraphicsUnit.Inch;
-
-            Single leftMargin = (Single).5;
-            Single rightMargin = (Single)8;
-            Single topMargin = (Single).5;
-            Single bottomMargin = (Single)10;
-            Single width = (Single)8;
-            Single height = (Single)10;
-            StringFormat sf = StringFormat.GenericTypographic;
-            Font messageFont = new Font("Calibri", 16, System.Drawing.GraphicsUnit.Point);
-
-            if (lsbMessages.SelectedIndex >= 0)
-            {
-                currentPage++;
-
-                sf.Alignment = StringAlignment.Far;
-                g.DrawString("To        :", messageFont, Brushes.Black, leftMargin, topMargin);
-                g.DrawString(((MyMessage)lsbMessages.SelectedItem).To.Name, messageFont, Brushes.Black, rightMargin, topMargin, sf);
-                g.DrawString("From      :", messageFont, Brushes.Black, leftMargin, (float)(topMargin + .25));
-                g.DrawString(((MyMessage)lsbMessages.SelectedItem).From.Name, messageFont, Brushes.Black, rightMargin, (float)(topMargin + .25), sf);
-                g.DrawString("Timestamp :", messageFont, Brushes.Black, leftMargin, (float)(topMargin + .5));
-                g.DrawString(((MyMessage)lsbMessages.SelectedItem).TimeStamp.ToString("yyyy-MM-dd hh:mm:ss tt"), messageFont, Brushes.Black, rightMargin, (float)(topMargin + .5), sf);
-                sf = new StringFormat(StringFormatFlags.NoClip);
-                g.DrawString(txbBody.Text, messageFont, Brushes.Black, new RectangleF(leftMargin, (float)(topMargin + 1), width, height), sf);
-            }
-        }
-
-        private void prntAllMessages_BeginPrint(object sender, System.Drawing.Printing.PrintEventArgs e)
-        {
-            currentPage = currentRow = 0;
-        }
-
-        private void prntAllMessages_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
-        {
-            Graphics g = e.Graphics;
-
-            Single leftMargin = (Single)25;
-            Single rightMargin = (Single)825;
-            Single topMargin = (Single)50;
-            Single bottomMargin = (Single)1050;
-            Single width = (Single)800;
-            Single height = (Single)1050;
-            DateTime newestTimestamp;
-            DateTime oldestTimestamp;
-            StringFormat sf = StringFormat.GenericTypographic;
-            Font messageFont = new Font("Calibri", 16, System.Drawing.GraphicsUnit.Point);
-
-            if (lsbUsers.SelectedIndex >= 0)
-            {
-                currentPage++;
-
-                MyUser currentUser = (MyUser)lsbUsers.SelectedItem;
-                newestTimestamp = m_Table[currentUser][0].TimeStamp;
-                oldestTimestamp = m_Table[currentUser][m_Table[currentUser].Count - 1].TimeStamp;
-
-                string message = String.Format("Messages for : {0} from {1} to {2}", currentUser.Name, oldestTimestamp.ToString("yyyy-MM-dd hh:mm tt"), newestTimestamp.ToString("yyyy-MM-dd hh:mm tt"));
-                g.DrawString(message, messageFont, Brushes.Black, leftMargin, topMargin);
-
-                Single currentPosition = 100;
-                int rowCounter;
-                MyMessage mm;
-
-                for (rowCounter = currentRow; rowCounter < m_Table[currentUser].Count; rowCounter++)
-                {
-                    mm = m_Table[currentUser][rowCounter];
-                    message = String.Format("At: {3,-25}To: {0,-20}From: {1,-20}\n{2}", mm.To, mm.From, mm.Body, mm.TimeStamp);
-                    Single currentRowHeight = PrintDetailRow(leftMargin, currentPosition, 25, 1050, 825, message, e, true, rowCounter);
-                    if (currentPosition + currentRowHeight < height)
-                    {
-                        currentPosition += PrintDetailRow(leftMargin, currentPosition, 25, 1050, 825, message, e, false, rowCounter);
-                        currentPosition += 10;
-                    }
-                    else
-                    {
-                        e.HasMorePages = true;
-                        currentRow = rowCounter;
-                        break;
-                    }
-                }
-            }
-        }
-
-        Single PrintDetailRow(Single x, Single y, Single minHeight, Single maxHeight, Single width, string message, System.Drawing.Printing.PrintPageEventArgs e, bool sizeOnly, int rowCounter)
-        {
-            Graphics g = e.Graphics;
-            String detailText = message;
-            RectangleF detailTextLayout = new RectangleF(x, y, width, maxHeight);
-            Single detailHeight = 0;
-            Font detailRowFont = new Font("Calibri", 16, System.Drawing.GraphicsUnit.Point);
-            StringFormat detailStringFormat = new StringFormat(StringFormatFlags.LineLimit);
-            detailStringFormat.Trimming = StringTrimming.EllipsisCharacter;
-
-            detailTextLayout.Width = width;
-
-            detailHeight = (Single)Math.Max(g.MeasureString(detailText, detailRowFont, detailTextLayout.Size, detailStringFormat).Height, detailHeight) + (Single).1;
-
-            detailTextLayout.X = x;
-            detailTextLayout.Height = Math.Max(Math.Min(detailHeight, maxHeight), minHeight);
-
-            if (!sizeOnly)
-            {
-                //if (rowCounter % 2 == 1) g.DrawRectangle(Pens.Gray, new Rectangle((int)detailTextLayout.X, (int)detailTextLayout.Y, (int)detailTextLayout.Width, (int)detailTextLayout.Height));
-
-                Rectangle rect = new Rectangle((int)detailTextLayout.X, (int)detailTextLayout.Y, (int)detailTextLayout.Width, (int)detailTextLayout.Height);
-                //LinearGradientBrush br = new LinearGradientBrush(rect, Color.FromArgb(240, 240, 240), Color.FromArgb(240, 240, 240), 0, false);
-                //g.FillRectangle(br, rect);
-                g.DrawRectangle(Pens.Black, rect);
-                g.DrawString(detailText, detailRowFont, Brushes.Black, detailTextLayout, detailStringFormat);
-                detailTextLayout.X = x;
-                detailTextLayout.Y = y;
-                detailTextLayout.Height = detailHeight;
-                detailTextLayout.Width = width;
-            }
-
-            return detailTextLayout.Height;
-        }
-        #endregion
-    }
+	}
 }
