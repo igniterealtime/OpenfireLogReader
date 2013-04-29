@@ -247,22 +247,29 @@ namespace OpenfireLogReader {
 								m_userMessages[toUser].Add(myMessage);
 								if (!m_userInteractions[toUser].ContainsKey(fromUser)) {
 									m_userInteractions[toUser].Add(fromUser, 1);
-									m_userInteractions[fromUser].Add(toUser, 1);
 								} else {
 									m_userInteractions[toUser][fromUser]++;
-									m_userInteractions[fromUser][toUser]++;
 								}
 							}
-							if (!m_userMessages[fromUser].Contains(myMessage)) {
-								m_userMessages[fromUser].Add(myMessage);
-							}
-
+                            if (toUser != fromUser)
+                            {
+                                if (!m_userMessages[fromUser].Contains(myMessage))
+                                {
+                                    m_userMessages[fromUser].Add(myMessage);
+                                }
+                                if (!m_userInteractions[fromUser].ContainsKey(toUser))
+                                {
+                                    m_userInteractions[fromUser].Add(toUser, 1);
+                                }
+                                else
+                                {
+                                    m_userInteractions[fromUser][toUser]++;
+                                }
+                            }
 						}
 					}
 				}
 			}
-
-
 		}
 
 		private void updateFilterList() {

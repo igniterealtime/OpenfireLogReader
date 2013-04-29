@@ -1,0 +1,3 @@
+﻿Release 1.1.0.0 - 29 Apr 2013 - Seth Randall
+- Fix log loading failure when the sender and the receiver are the same.
+  Thanks to Joshua Cantara for finding the issue.
