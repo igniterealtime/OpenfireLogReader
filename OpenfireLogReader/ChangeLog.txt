@@ -1,3 +1,8 @@
-﻿Release 1.1.0.0 - 29 Apr 2013 - Seth Randall
-- Fix log loading failure when the sender and the receiver are the same.
-  Thanks to Joshua Cantara for finding the issue.
+﻿Release 1.2.0.0 - 21 Nov 2013 - Seth Randall
+- Allow filtering on the import.
+- Optional removal of the domain on import.
+- Fixed error with import of dates from non-en_US locales. Thanks to Leonhard Schick for finding the issue
+- Fixed out of range error when viewing filtered messages
+
+Release 1.1.0.0 - 29 Apr 2013 - Seth Randall
+- Fix log loading failure when the sender and the receiver are the same. Thanks to Joshua Cantara for finding the issue.

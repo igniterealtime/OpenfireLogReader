@@ -28,6 +28,7 @@ namespace OpenfireLogReader
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.ofdLog = new System.Windows.Forms.OpenFileDialog();
             this.mstMenu = new System.Windows.Forms.MenuStrip();
@@ -40,6 +41,7 @@ namespace OpenfireLogReader
             this.printPreviewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.c_messageDisplay = new System.Windows.Forms.TextBox();
             this.c_userList = new System.Windows.Forms.ListBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
@@ -58,11 +60,17 @@ namespace OpenfireLogReader
             this.c_filterApplyButton = new System.Windows.Forms.Button();
             this.c_filterClearButton = new System.Windows.Forms.Button();
             this.backgroundWorker = new System.ComponentModel.BackgroundWorker();
-            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.c_importFilterCheck = new System.Windows.Forms.CheckBox();
+            this.c_loadFilterName = new System.Windows.Forms.TextBox();
+            this.loadFilterToolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.c_removeDomainCheck = new System.Windows.Forms.CheckBox();
+            this.removeDomainToolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.c_importOptionsGroup = new System.Windows.Forms.GroupBox();
             this.mstMenu.SuspendLayout();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            this.c_importOptionsGroup.SuspendLayout();
             this.SuspendLayout();
             // 
             // ofdLog
@@ -93,72 +101,79 @@ namespace OpenfireLogReader
             this.toolStripSeparator2,
             this.exitToolStripMenuItem});
             this.fileMenuItem.Name = "fileMenuItem";
-            this.fileMenuItem.Size = new System.Drawing.Size(35, 20);
+            this.fileMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileMenuItem.Text = "&File";
             // 
             // openLogMenuItem
             // 
             this.openLogMenuItem.Name = "openLogMenuItem";
-            this.openLogMenuItem.Size = new System.Drawing.Size(176, 22);
-            this.openLogMenuItem.Text = "&Open Log...";
+            this.openLogMenuItem.Size = new System.Drawing.Size(178, 22);
+            this.openLogMenuItem.Text = "&Import Log...";
             this.openLogMenuItem.Click += new System.EventHandler(this.openLogToolStripMenuItem_Click);
             // 
             // openLogFolderMenuItem
             // 
             this.openLogFolderMenuItem.Name = "openLogFolderMenuItem";
-            this.openLogFolderMenuItem.Size = new System.Drawing.Size(176, 22);
-            this.openLogFolderMenuItem.Text = "Open Log &Folder...";
+            this.openLogFolderMenuItem.Size = new System.Drawing.Size(178, 22);
+            this.openLogFolderMenuItem.Text = "Import Log &Folder...";
             this.openLogFolderMenuItem.Click += new System.EventHandler(this.openLogFolderMenu_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(173, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(175, 6);
             // 
             // pageSetupToolStripMenuItem
             // 
             this.pageSetupToolStripMenuItem.Name = "pageSetupToolStripMenuItem";
-            this.pageSetupToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.pageSetupToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             this.pageSetupToolStripMenuItem.Text = "Page Set&up...";
             this.pageSetupToolStripMenuItem.Click += new System.EventHandler(this.pageSetupToolStripMenuItem_Click);
             // 
             // printToolStripMenuItem
             // 
             this.printToolStripMenuItem.Name = "printToolStripMenuItem";
-            this.printToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.printToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             this.printToolStripMenuItem.Text = "&Print...";
             this.printToolStripMenuItem.Click += new System.EventHandler(this.printToolStripMenuItem_Click);
             // 
             // printPreviewToolStripMenuItem
             // 
             this.printPreviewToolStripMenuItem.Name = "printPreviewToolStripMenuItem";
-            this.printPreviewToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.printPreviewToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             this.printPreviewToolStripMenuItem.Text = "Print Preview...";
             this.printPreviewToolStripMenuItem.Click += new System.EventHandler(this.printPreviewToolStripMenuItem_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(173, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(175, 6);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             this.exitToolStripMenuItem.Text = "E&xit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            // 
+            // aboutToolStripMenuItem
+            // 
+            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
+            this.aboutToolStripMenuItem.Text = "&About";
+            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
             // c_messageDisplay
             // 
             this.c_messageDisplay.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.c_messageDisplay.Location = new System.Drawing.Point(12, 352);
+            this.c_messageDisplay.Location = new System.Drawing.Point(16, 352);
             this.c_messageDisplay.Multiline = true;
             this.c_messageDisplay.Name = "c_messageDisplay";
             this.c_messageDisplay.ReadOnly = true;
             this.c_messageDisplay.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.c_messageDisplay.Size = new System.Drawing.Size(768, 162);
-            this.c_messageDisplay.TabIndex = 4;
+            this.c_messageDisplay.Size = new System.Drawing.Size(761, 162);
+            this.c_messageDisplay.TabIndex = 5;
             // 
             // c_userList
             // 
@@ -169,7 +184,7 @@ namespace OpenfireLogReader
             this.c_userList.IntegralHeight = false;
             this.c_userList.Location = new System.Drawing.Point(3, 3);
             this.c_userList.Name = "c_userList";
-            this.c_userList.Size = new System.Drawing.Size(124, 284);
+            this.c_userList.Size = new System.Drawing.Size(124, 235);
             this.c_userList.Sorted = true;
             this.c_userList.TabIndex = 0;
             this.c_userList.SelectedIndexChanged += new System.EventHandler(this.c_userList_SelectedIndexChanged);
@@ -180,7 +195,7 @@ namespace OpenfireLogReader
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
-            this.splitContainer1.Location = new System.Drawing.Point(13, 28);
+            this.splitContainer1.Location = new System.Drawing.Point(13, 77);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -190,9 +205,9 @@ namespace OpenfireLogReader
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.c_messageList);
-            this.splitContainer1.Size = new System.Drawing.Size(767, 292);
+            this.splitContainer1.Size = new System.Drawing.Size(767, 243);
             this.splitContainer1.SplitterDistance = 130;
-            this.splitContainer1.TabIndex = 0;
+            this.splitContainer1.TabIndex = 1;
             // 
             // c_messageList
             // 
@@ -210,7 +225,7 @@ namespace OpenfireLogReader
             this.c_messageList.HideSelection = false;
             this.c_messageList.Location = new System.Drawing.Point(4, 4);
             this.c_messageList.Name = "c_messageList";
-            this.c_messageList.Size = new System.Drawing.Size(626, 283);
+            this.c_messageList.Size = new System.Drawing.Size(626, 234);
             this.c_messageList.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this.c_messageList.TabIndex = 0;
             this.c_messageList.UseCompatibleStateImageBehavior = false;
@@ -247,7 +262,7 @@ namespace OpenfireLogReader
             this.c_filterList.Location = new System.Drawing.Point(48, 324);
             this.c_filterList.Name = "c_filterList";
             this.c_filterList.Size = new System.Drawing.Size(160, 21);
-            this.c_filterList.TabIndex = 1;
+            this.c_filterList.TabIndex = 2;
             // 
             // lblFilter
             // 
@@ -256,7 +271,7 @@ namespace OpenfireLogReader
             this.lblFilter.Location = new System.Drawing.Point(13, 327);
             this.lblFilter.Name = "lblFilter";
             this.lblFilter.Size = new System.Drawing.Size(29, 13);
-            this.lblFilter.TabIndex = 17;
+            this.lblFilter.TabIndex = 0;
             this.lblFilter.Text = "Filter";
             // 
             // printDialog
@@ -285,7 +300,7 @@ namespace OpenfireLogReader
             this.c_filterApplyButton.Location = new System.Drawing.Point(214, 323);
             this.c_filterApplyButton.Name = "c_filterApplyButton";
             this.c_filterApplyButton.Size = new System.Drawing.Size(75, 23);
-            this.c_filterApplyButton.TabIndex = 19;
+            this.c_filterApplyButton.TabIndex = 3;
             this.c_filterApplyButton.Text = "Apply Filter";
             this.c_filterApplyButton.UseVisualStyleBackColor = true;
             this.c_filterApplyButton.Click += new System.EventHandler(this.c_filterButton_Click);
@@ -296,7 +311,7 @@ namespace OpenfireLogReader
             this.c_filterClearButton.Location = new System.Drawing.Point(295, 323);
             this.c_filterClearButton.Name = "c_filterClearButton";
             this.c_filterClearButton.Size = new System.Drawing.Size(75, 23);
-            this.c_filterClearButton.TabIndex = 19;
+            this.c_filterClearButton.TabIndex = 4;
             this.c_filterClearButton.Text = "Clear Filter";
             this.c_filterClearButton.UseVisualStyleBackColor = true;
             this.c_filterClearButton.Click += new System.EventHandler(this.c_filterButton_Click);
@@ -307,18 +322,57 @@ namespace OpenfireLogReader
             this.backgroundWorker.WorkerSupportsCancellation = true;
             this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_DoWork);
             // 
-            // aboutToolStripMenuItem
+            // c_importFilterCheck
             // 
-            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
-            this.aboutToolStripMenuItem.Text = "&About";
-            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
+            this.c_importFilterCheck.AutoSize = true;
+            this.c_importFilterCheck.Location = new System.Drawing.Point(6, 19);
+            this.c_importFilterCheck.Name = "c_importFilterCheck";
+            this.c_importFilterCheck.Size = new System.Drawing.Size(80, 17);
+            this.c_importFilterCheck.TabIndex = 0;
+            this.c_importFilterCheck.Text = "Import Filter";
+            this.c_importFilterCheck.UseVisualStyleBackColor = true;
+            this.c_importFilterCheck.CheckedChanged += new System.EventHandler(this.c_loadFilterCheck_CheckedChanged);
+            // 
+            // c_loadFilterName
+            // 
+            this.c_loadFilterName.Enabled = false;
+            this.c_loadFilterName.Location = new System.Drawing.Point(92, 17);
+            this.c_loadFilterName.Name = "c_loadFilterName";
+            this.c_loadFilterName.Size = new System.Drawing.Size(212, 20);
+            this.c_loadFilterName.TabIndex = 1;
+            // 
+            // c_removeDomainCheck
+            // 
+            this.c_removeDomainCheck.AutoSize = true;
+            this.c_removeDomainCheck.Checked = true;
+            this.c_removeDomainCheck.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.c_removeDomainCheck.Location = new System.Drawing.Point(310, 19);
+            this.c_removeDomainCheck.Name = "c_removeDomainCheck";
+            this.c_removeDomainCheck.Size = new System.Drawing.Size(136, 17);
+            this.c_removeDomainCheck.TabIndex = 2;
+            this.c_removeDomainCheck.Text = "Remove Domain Name";
+            this.c_removeDomainCheck.UseVisualStyleBackColor = true;
+            // 
+            // c_importOptionsGroup
+            // 
+            this.c_importOptionsGroup.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.c_importOptionsGroup.Controls.Add(this.c_importFilterCheck);
+            this.c_importOptionsGroup.Controls.Add(this.c_removeDomainCheck);
+            this.c_importOptionsGroup.Controls.Add(this.c_loadFilterName);
+            this.c_importOptionsGroup.Location = new System.Drawing.Point(13, 28);
+            this.c_importOptionsGroup.Name = "c_importOptionsGroup";
+            this.c_importOptionsGroup.Size = new System.Drawing.Size(767, 43);
+            this.c_importOptionsGroup.TabIndex = 0;
+            this.c_importOptionsGroup.TabStop = false;
+            this.c_importOptionsGroup.Text = "Import Options";
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(792, 526);
+            this.Controls.Add(this.c_importOptionsGroup);
             this.Controls.Add(this.c_filterApplyButton);
             this.Controls.Add(this.c_filterClearButton);
             this.Controls.Add(this.lblFilter);
@@ -335,6 +389,8 @@ namespace OpenfireLogReader
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             this.splitContainer1.ResumeLayout(false);
+            this.c_importOptionsGroup.ResumeLayout(false);
+            this.c_importOptionsGroup.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -372,6 +428,12 @@ namespace OpenfireLogReader
 		private System.Windows.Forms.Button c_filterClearButton;
 		private System.ComponentModel.BackgroundWorker backgroundWorker;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
+        private System.Windows.Forms.CheckBox c_importFilterCheck;
+        private System.Windows.Forms.TextBox c_loadFilterName;
+        private System.Windows.Forms.ToolTip loadFilterToolTip;
+        private System.Windows.Forms.CheckBox c_removeDomainCheck;
+        private System.Windows.Forms.ToolTip removeDomainToolTip;
+        private System.Windows.Forms.GroupBox c_importOptionsGroup;
     }
 }
 

@@ -9,7 +9,7 @@
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>OpenfireLogReader</RootNamespace>
-    <AssemblyName>OpenfireLogReader</AssemblyName>
+    <AssemblyName>Openfire Log Reader</AssemblyName>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>

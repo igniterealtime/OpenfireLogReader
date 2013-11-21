@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using System.IO;
 using System.Xml;
@@ -37,6 +38,8 @@ namespace OpenfireLogReader {
 
 		public MainForm() {
 			InitializeComponent();
+            loadFilterToolTip.SetToolTip(c_importFilterCheck, "Only import conversations involving the specified user");
+            removeDomainToolTip.SetToolTip(c_removeDomainCheck, "Display and filter by the username only");
 		}
 
 		#region Events
@@ -161,6 +164,17 @@ namespace OpenfireLogReader {
 			}
 
 		}
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AboutBox about = new AboutBox();
+            about.ShowDialog();
+        }
+
+        private void c_loadFilterCheck_CheckedChanged(object sender, EventArgs e)
+        {
+            c_loadFilterName.Enabled = c_importFilterCheck.Checked;
+        }
         #endregion
 
 		#region Methods
@@ -197,75 +211,129 @@ namespace OpenfireLogReader {
 			MyUser toUser;
 			MyUser fromUser;
 			MyMessage myMessage;
+            MyUser filterUser = null;
+            //String fromResource, toResource;
 
-			XmlNode parentNode = doc.ChildNodes[0];
+            if (c_importFilterCheck.Checked == true)
+            {
+                if (c_loadFilterName.Text.Trim() != "")
+                {
+                    filterUser = new MyUser(c_loadFilterName.Text.Trim());
+                }
+            }
+
+            XmlNode parentNode = doc.ChildNodes[0];
 
 			foreach (XmlNode packet in parentNode.ChildNodes) {
 				if (packet.Attributes["timestamp"] == null)
 					continue;
 
-				date = DateTime.ParseExact(packet.Attributes["timestamp"].Value, "MMM dd, yyyy hh:mm:ss:fff tt", CultureInfo.InvariantCulture);
 
-				foreach (XmlNode message in packet.ChildNodes) {
-					if (message.Attributes["from"] == null)
-						continue;
-
-					from = message.Attributes["from"].Value;
-					if (from.IndexOf("@") == -1)
-						continue;
-
-					if (message.Attributes["to"] == null)
-						continue;
-
-					to = message.Attributes["to"].Value;
-					if (to == null || to.IndexOf("@") == -1)
-						continue;
-
-					if (message.Attributes["id"] == null) {
-						id = "";
-					} else {
-						id = message.Attributes["id"].Value.Trim();
+				if (!DateTime.TryParseExact(packet.Attributes["timestamp"].Value, "MMM dd, yyyy hh:mm:ss:fff tt", new CultureInfo("en-US", true), DateTimeStyles.AllowWhiteSpaces, out date))
+				{
+					DialogResult ErrorResult = MessageBox.Show(String.Format("Error parsing date ({0}).", packet.Attributes["timestamp"].Value), "Parse Error", MessageBoxButtons.OKCancel, MessageBoxIcon.Error);
+					if (ErrorResult == System.Windows.Forms.DialogResult.Cancel)
+					{
+						backgroundWorker.CancelAsync();
+						return;
 					}
+				} else {
+					foreach (XmlNode message in packet.ChildNodes)
+					{
+						if (message.Attributes["from"] == null)
+							continue;
 
-					toUser = new MyUser(to.Substring(0, to.IndexOf("@")));
-					fromUser = new MyUser(from.Substring(0, from.IndexOf("@")));
+						from = message.Attributes["from"].Value;
+						if (from.IndexOf("@") == -1)
+							continue;
 
-					foreach (XmlNode body in message.ChildNodes) {
-						if (body.Name == "body") {
-							myMessage = new MyMessage(date, toUser, fromUser, id, body.InnerText.Trim());
-							// Make sure toUser and fromUser exist in the dictionaries
-							if (!m_userMessages.ContainsKey(toUser)) {
-								m_userMessages.Add(toUser, new List<MyMessage>());
-								m_userInteractions.Add(toUser, new Dictionary<MyUser, int>());
+						if (message.Attributes["to"] == null)
+							continue;
+
+						to = message.Attributes["to"].Value;
+						if (to == null || to.IndexOf("@") == -1)
+							continue;
+
+						if (message.Attributes["id"] == null)
+						{
+							id = "";
+						}
+						else
+						{
+							id = message.Attributes["id"].Value.Trim();
+						}
+
+						if (c_removeDomainCheck.Checked)
+						{
+							/* Only get what's before the  '@' */
+							to = to.Substring(0, to.IndexOf("@"));
+							from = from.Substring(0, from.IndexOf("@"));
+						}
+						else
+						{
+							/* Remove any resource strings at the end of the name */
+							if (from.IndexOf("/") > 0)
+							{
+								from = from.Substring(0, from.IndexOf("/"));
 							}
-							if (!m_userMessages.ContainsKey(fromUser)) {
-								m_userMessages.Add(fromUser, new List<MyMessage>());
-								m_userInteractions.Add(fromUser, new Dictionary<MyUser, int>());
+							if (to.IndexOf("/") > 0)
+							{
+								to = to.Substring(0, to.IndexOf("/"));
 							}
+						}
+						fromUser = new MyUser(from);
+						toUser = new MyUser(to);
 
-							if (!m_userMessages[toUser].Contains(myMessage)) {
-								m_userMessages[toUser].Add(myMessage);
-								if (!m_userInteractions[toUser].ContainsKey(fromUser)) {
-									m_userInteractions[toUser].Add(fromUser, 1);
-								} else {
-									m_userInteractions[toUser][fromUser]++;
+						if (filterUser != null && filterUser.CompareTo(toUser) != 0 && filterUser.CompareTo(fromUser) != 0)
+						{
+							continue;
+						}
+
+						foreach (XmlNode body in message.ChildNodes)
+						{
+							if (body.Name == "body")
+							{
+								myMessage = new MyMessage(date, toUser, fromUser, id, body.InnerText.Trim());
+								// Make sure toUser and fromUser exist in the dictionaries
+								if (!m_userMessages.ContainsKey(toUser))
+								{
+									m_userMessages.Add(toUser, new List<MyMessage>());
+									m_userInteractions.Add(toUser, new Dictionary<MyUser, int>());
+								}
+								if (!m_userMessages.ContainsKey(fromUser))
+								{
+									m_userMessages.Add(fromUser, new List<MyMessage>());
+									m_userInteractions.Add(fromUser, new Dictionary<MyUser, int>());
+								}
+
+								if (!m_userMessages[toUser].Contains(myMessage))
+								{
+									m_userMessages[toUser].Add(myMessage);
+									if (!m_userInteractions[toUser].ContainsKey(fromUser))
+									{
+										m_userInteractions[toUser].Add(fromUser, 1);
+									}
+									else
+									{
+										m_userInteractions[toUser][fromUser]++;
+									}
+									if (toUser != fromUser)
+									{
+										if (!m_userMessages[fromUser].Contains(myMessage))
+										{
+											m_userMessages[fromUser].Add(myMessage);
+										}
+										if (!m_userInteractions[fromUser].ContainsKey(toUser))
+										{
+											m_userInteractions[fromUser].Add(toUser, 1);
+										}
+										else
+										{
+											m_userInteractions[fromUser][toUser]++;
+										}
+									}
 								}
 							}
-                            if (toUser != fromUser)
-                            {
-                                if (!m_userMessages[fromUser].Contains(myMessage))
-                                {
-                                    m_userMessages[fromUser].Add(myMessage);
-                                }
-                                if (!m_userInteractions[fromUser].ContainsKey(toUser))
-                                {
-                                    m_userInteractions[fromUser].Add(toUser, 1);
-                                }
-                                else
-                                {
-                                    m_userInteractions[fromUser][toUser]++;
-                                }
-                            }
 						}
 					}
 				}
@@ -481,11 +549,5 @@ namespace OpenfireLogReader {
 			}		
 		}
 		#endregion
-
-        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            AboutBox about = new AboutBox();
-            about.ShowDialog();
-        }
 	}
 }
